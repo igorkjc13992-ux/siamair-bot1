@@ -85,20 +85,10 @@ def append_to_sheet(data):
         body=body
     ).execute()
 
-async def handle_any_update(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logger.info(f"UPDATE RECEIVED: {update}")
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logger.info(f"MESSAGE RECEIVED: {update}")
-    if not update.message:
-        logger.info("No message in update")
-        return
-    if not update.message.text:
-        logger.info("No text in message")
-        return
-    text = update.message.text
-    logger.info(f"Text: {text}")
-    if len(text) < 5:
+async def process_text(msg, context):
+    """Обрабатывает текст из любого типа сообщения"""
+    text = msg.text
+    if not text or len(text) < 5:
         return
 
     try:
@@ -106,11 +96,43 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.info(f"Parsed: {parsed}")
 
         if "error" in parsed:
+            logger.info("Could not parse message")
             return
 
         append_to_sheet(parsed)
+        logger.info("Written to sheet successfully")
 
-        await update.message.reply_text(
+        await msg.reply_text(
+            f"✅ Записано в таблицу:\n"
+            f"📅 {parsed['date']}\n"
+            f"💰 {parsed['amount']} бат\n"
+            f"👤 {parsed['participant']}\n"
+            f"📂 {parsed['category']}"
+            + (f"\n📝 {parsed['note']}" if parsed['note'] else "")
+        )
+
+    except Exception as e:
+        logger.error(f"Error: {e}")
+
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = update.message or update.channel_post
+    if not msg:
+        return
+    await process_text(msg, context)
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = update.message or update.channel_post
+    if msg:
+        await msg.reply_text("Бот работает! Пишите расходы.")
+
+def main():
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.ALL, handle_message))
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
+
+if __name__ == "__main__":
+    main()        await update.message.reply_text(
             f"✅ Записано в таблицу:\n"
             f"📅 {parsed['date']}\n"
             f"💰 {parsed['amount']} бат\n"
