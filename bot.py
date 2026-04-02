@@ -88,15 +88,17 @@ def append_to_sheet(data):
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message:
         return
+    if not update.message.text:
+        return
     text = update.message.text
-    if not text or len(text) < 5:
+    if len(text) < 5:
         return
 
     try:
         parsed = parse_with_claude(text)
 
         if "error" in parsed:
-            return  # Тихо игнорируем нераспознанные сообщения
+            return
 
         append_to_sheet(parsed)
 
