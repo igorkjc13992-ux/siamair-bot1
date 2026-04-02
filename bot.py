@@ -4,7 +4,7 @@ import json
 import logging
 from datetime import datetime
 from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
+from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, filters, ContextTypes
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 import anthropic
@@ -85,17 +85,25 @@ def append_to_sheet(data):
         body=body
     ).execute()
 
+async def handle_any_update(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info(f"UPDATE RECEIVED: {update}")
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info(f"MESSAGE RECEIVED: {update}")
     if not update.message:
+        logger.info("No message in update")
         return
     if not update.message.text:
+        logger.info("No text in message")
         return
     text = update.message.text
+    logger.info(f"Text: {text}")
     if len(text) < 5:
         return
 
     try:
         parsed = parse_with_claude(text)
+        logger.info(f"Parsed: {parsed}")
 
         if "error" in parsed:
             return
@@ -114,10 +122,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Error: {e}")
 
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Бот работает! Пишите расходы.")
+
 def main():
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    app.run_polling()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.ALL, handle_message))
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
     main()
