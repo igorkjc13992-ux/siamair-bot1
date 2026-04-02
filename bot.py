@@ -132,27 +132,4 @@ def main():
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
-    main()        await update.message.reply_text(
-            f"✅ Записано в таблицу:\n"
-            f"📅 {parsed['date']}\n"
-            f"💰 {parsed['amount']} бат\n"
-            f"👤 {parsed['participant']}\n"
-            f"📂 {parsed['category']}"
-            + (f"\n📝 {parsed['note']}" if parsed['note'] else "")
-        )
-
-    except Exception as e:
-        logger.error(f"Error: {e}")
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Бот работает! Пишите расходы.")
-
-def main():
-    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.ALL, handle_message))
-    app.add_handler(MessageHandler(filters.ALL, handle_any_update))
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
-
-if __name__ == "__main__":
     main()
