@@ -86,6 +86,8 @@ def append_to_sheet(data):
     ).execute()
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.message:
+        return
     text = update.message.text
     if not text or len(text) < 5:
         return
